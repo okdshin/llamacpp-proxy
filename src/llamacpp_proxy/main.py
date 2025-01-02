@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import time
 import uuid
@@ -11,7 +12,7 @@ from collections import defaultdict
 import httpx
 import jinja2
 import uvicorn
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -185,20 +186,25 @@ async def chat_completions(
             status_code=400, detail=f"Template rendering error: {str(e)}"
         )
 
+    if not isinstance(request.stop, list):
+        request.stop = [request.stop]
+
     # llama.cppサーバーへのリクエストを準備
     llama_request = {
         "prompt": prompt,
         "temperature": request.temperature,
         "top_p": request.top_p,
-        "max_tokens": request.max_tokens,
+        "n_predict": request.max_tokens,
         "stop": request.stop,
         "stream": request.stream,
     }
 
+    logger.info(f"{llama_request=}")
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
-                f"{settings.llama_server_url}/v1/completions",
+                f"{settings.llama_server_url}/completions",
                 json=llama_request,
                 timeout=300.0,
             )
