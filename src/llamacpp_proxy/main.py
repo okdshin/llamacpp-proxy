@@ -67,6 +67,7 @@ class ChatCompletionRequest(BaseModel):
     presence_penalty: Optional[float] = 0.0
     frequency_penalty: Optional[float] = 0.0
     user: Optional[str] = None
+    extra_body: Optional[str] = None
 
 
 class CompletionChoice(BaseModel):
@@ -198,6 +199,17 @@ async def chat_completions(
         "stop": request.stop,
         "stream": request.stream,
     }
+    if request.extra_body is not None:
+        try:
+            extra_body = json.loads(request.extra_body)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid extra_body {request.extra_body}"
+            )
+
+        grammar = extra_body.get("llamacpp_proxy_grammar")
+        if grammar is not None:
+            llama_request["grammar"] = grammar
 
     logger.info(f"{llama_request=}")
 
