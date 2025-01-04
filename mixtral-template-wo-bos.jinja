@@ -18,7 +18,7 @@
  {{- '[INST]' + message['content'] + '[/INST]' }}
  {%- endif %}
  {%- elif message['role'] == 'assistant' %}
- {{- message['content'] + eos_token}}
+ {{- message['content']}}</s>
  {%- else %}
  {{- raise_exception('Only user and assistant roles are supported, with the exception of an initial optional system message!') }}
  {%- endif %}
