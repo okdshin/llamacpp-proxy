@@ -1,4 +1,5 @@
 import argparse
+import os
 import logging
 from dotenv import load_dotenv
 import uvicorn
@@ -79,6 +80,8 @@ def main():
     # グローバル設定を更新
     settings.llamacpp_server_url = args.llamacpp_server
     settings.chat_template = settings.load_chat_template(args.chat_template_jinja)
+    rate_limit_settings.unlimited_api_key = os.getenv("LLAMACPP_PROXY_UNLIMITED_API_KEY")
+    rate_limit_settings.limited_api_key = os.getenv("LLAMACPP_PROXY_LIMITED_API_KEY")
     rate_limit_settings.window = args.rate_limit_window
     rate_limit_settings.max_requests = args.rate_limit_max_requests
 
