@@ -7,13 +7,13 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Settings:
-    llama_server_url: str = ""
+    llamacpp_server_url: str = ""
     chat_template: str = ""
 
     def validate(self):
         """設定の検証を行う"""
-        if not self.llama_server_url:
-            raise ValueError("llama_server_url must be set")
+        if not self.llamacpp_server_url:
+            raise ValueError("llamacpp_server_url must be set")
         if not self.chat_template:
             raise ValueError("chat_template must be set")
 

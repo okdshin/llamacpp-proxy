@@ -52,7 +52,7 @@ def main():
         help="Port to bind to (default: 8000)"
     )
     parser.add_argument(
-        "--llama-server",
+        "--llamacpp-server",
         default="http://localhost:8080",
         help="URL of the llama.cpp server (default: http://localhost:8080)",
     )
@@ -77,7 +77,7 @@ def main():
     args = parser.parse_args()
 
     # グローバル設定を更新
-    settings.llama_server_url = args.llama_server
+    settings.llamacpp_server_url = args.llamacpp_server
     settings.chat_template = settings.load_chat_template(args.chat_template_jinja)
     rate_limit_settings.window = args.rate_limit_window
     rate_limit_settings.max_requests = args.rate_limit_max_requests
@@ -87,7 +87,7 @@ def main():
 
     # 設定情報のログ出力
     logger.info(f"Starting server on {args.host}:{args.port}")
-    logger.info(f"Proxying requests to {settings.llama_server_url}")
+    logger.info(f"Proxying requests to {settings.llamacpp_server_url}")
     logger.info(f"Using chat_template from: {args.chat_template_jinja}")
     logger.info(f"Template content:\n```\n{settings.chat_template}\n```")
     logger.info(
