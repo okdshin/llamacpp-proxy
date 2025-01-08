@@ -1,15 +1,53 @@
 import logging
 import time
 import uuid
-from typing import Union, List
+import math
+from typing import Union, List, Dict
 from fastapi import Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from llamacpp_proxy.models.completion import CompletionRequest, CompletionResponse, CompletionResponseChoice
+from llamacpp_proxy.models.completion import (
+    CompletionRequest,
+    CompletionResponse,
+    CompletionResponseChoice,
+    LogProbs
+)
 from llamacpp_proxy.services.llamacpp import LlamaCppClient
 from llamacpp_proxy.middleware.auth import get_api_key
 
 logger = logging.getLogger(__name__)
+
+def process_logprobs(token_data: List[Dict[str, Any]], top_n: int) -> LogProbs:
+    """トークンの確率情報を処理してLogProbsオブジェクトを生成"""
+    tokens = []
+    token_logprobs = []
+    top_logprobs = []
+    text_offset = []  # 現在の実装では正確な文字オフセットは計算しない
+    
+    current_offset = 0
+    for token in token_data:
+        tokens.append(token["text"])
+        token_logprob = math.log(token["probability"]) if token["probability"] > 0 else float("-inf")
+        token_logprobs.append(token_logprob)
+        
+        # top_logprobsの処理
+        assert "top_probs" in token:
+        top_probs = {
+            prob["text"]: math.log(prob["probability"]) if prob["probability"] > 0 else float("-inf")
+            for prob in token["top_probs"][:top_n]
+        }
+        top_logprobs.append(top_probs)
+        
+        # 簡易的な文字オフセットの計算（正確ではありません）
+        text_offset.append(current_offset)
+        current_offset += len(token["text"])
+    
+    return LogProbs(
+        tokens=tokens,
+        token_logprobs=token_logprobs,
+        top_logprobs=top_logprobs,
+        text_offset=text_offset
+    )
 
 async def completions(
     request: CompletionRequest,
@@ -35,6 +73,10 @@ async def completions(
             "frequency_penalty": request.frequency_penalty,
         }
         
+        # logprobsが指定されている場合、n_probsを設定
+        if request.logprobs is not None:
+            llamacpp_request["n_probs"] = request.logprobs
+        
         if request.llamacpp_proxy_grammar is not None:
             llamacpp_request["grammar"] = request.llamacpp_proxy_grammar
 
@@ -58,18 +100,26 @@ async def completions(
         completion_tokens = 0  # TODO: implement token counting
         total_tokens = prompt_tokens + completion_tokens
 
+        choices = []
+        for i, choice in enumerate(llamacpp_response):
+            logprobs = None
+            if request.logprobs is not None and "tokens" in choice:
+                logprobs = process_logprobs(choice["tokens"], request.logprobs)
+
+            choices.append(
+                CompletionResponseChoice(
+                    text=choice["content"],
+                    index=i,
+                    logprobs=logprobs,
+                    finish_reason="stop",  # TODO: implement proper finish reason
+                )
+            )
+
         return CompletionResponse(
             id=f"cmpl-{uuid.uuid4()}",
             created=int(time.time()),
             model=request.model,
-            choices=[
-                CompletionResponseChoice(
-                    text=choice["content"],
-                    index=i,
-                    finish_reason="stop",  # TODO: implement proper finish reason
-                )
-                for i, choice in enumerate(llamacpp_response)
-            ],
+            choices=choices,
             usage={
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,

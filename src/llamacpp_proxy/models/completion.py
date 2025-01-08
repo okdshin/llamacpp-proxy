@@ -10,6 +10,7 @@ class CompletionRequest(BaseModel):
     top_p: Optional[float] = 1.0
     n: Optional[int] = 1
     stream: Optional[bool] = False
+    logprobs: Optional[int] = None
     stop: Optional[Union[str, List[str]]] = None
     presence_penalty: Optional[float] = 0.0
     frequency_penalty: Optional[float] = 0.0
@@ -18,7 +19,6 @@ class CompletionRequest(BaseModel):
     suffix: Optional[str] = Field(None, description="Not supported")
     best_of: Optional[int] = Field(None, description="Not supported")
     logit_bias: Optional[Dict[str, float]] = Field(None, description="Not supported")
-    logprobs: Optional[int] = Field(None, description="Not supported")
     user: Optional[str] = None
 
     # extra parameter for llamacpp
@@ -40,7 +40,7 @@ class CompletionRequest(BaseModel):
             )
         return v
 
-    @validator('echo', 'suffix', 'best_of', 'logit_bias', 'logprobs')
+    @validator('echo', 'suffix', 'best_of', 'logit_bias')
     def validate_unsupported_params(cls, v, values, field):
         if v is not None:
             raise HTTPException(
@@ -56,9 +56,16 @@ class CompletionRequest(BaseModel):
             )
         return v
 
+class LogProbs(BaseModel):
+    tokens: List[str]
+    token_logprobs: List[float]
+    top_logprobs: List[Dict[str, float]]
+    text_offset: List[int]
+
 class CompletionResponseChoice(BaseModel):
     text: str
     index: int
+    logprobs: Optional[LogProbs] = None
     finish_reason: Optional[str] = None
 
 class CompletionResponse(BaseModel):
