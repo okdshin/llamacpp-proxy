@@ -56,6 +56,7 @@ class CompletionRequest(BaseModel):
                 }
             )
         return v
+    """
 
 class LogProbs(BaseModel):
     tokens: List[str]
