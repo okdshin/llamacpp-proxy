@@ -17,7 +17,7 @@ from llamacpp_proxy.middleware.auth import get_api_key
 
 logger = logging.getLogger(__name__)
 
-def process_logprobs(token_data: List[Dict[str, Any]], top_n: int) -> LogProbs:
+def process_logprobs(probs: List[Dict[str, Any]], top_n: int) -> LogProbs:
     """トークンの確率情報を処理してLogProbsオブジェクトを生成"""
     tokens = []
     token_logprobs = []
@@ -25,22 +25,19 @@ def process_logprobs(token_data: List[Dict[str, Any]], top_n: int) -> LogProbs:
     text_offset = []  # 現在の実装では正確な文字オフセットは計算しない
     
     current_offset = 0
-    for token in token_data:
-        tokens.append(token["text"])
-        token_logprob = math.log(token["probability"]) if token["probability"] > 0 else float("-inf")
-        token_logprobs.append(token_logprob)
+    for prob_info in probs:
+        tokens.append(prob_info["token"])
+        token_logprobs.append(prob_info["logprob"])
         
         # top_logprobsの処理
-        assert "top_probs" in token
         top_probs = {
-            prob["text"]: math.log(prob["probability"]) if prob["probability"] > 0 else float("-inf")
-            for prob in token["top_probs"][:top_n]
+            prob["text"]: prob["logprob"]
+            for prob in prob_info["top_probs"][:top_n]
         }
         top_logprobs.append(top_probs)
         
-        # 簡易的な文字オフセットの計算（正確ではありません）
         text_offset.append(current_offset)
-        current_offset += len(token["text"])
+        current_offset += len(prob_info["token"])
     
     return LogProbs(
         tokens=tokens,
@@ -104,7 +101,7 @@ async def completions(
         for i, choice in enumerate(llamacpp_response):
             logprobs = None
             if request.logprobs is not None and "tokens" in choice:
-                logprobs = process_logprobs(choice["tokens"], request.logprobs)
+                logprobs = process_logprobs(choice["probs"], request.logprobs)
 
             choices.append(
                 CompletionResponseChoice(
