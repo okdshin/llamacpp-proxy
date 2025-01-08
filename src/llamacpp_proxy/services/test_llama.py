@@ -41,18 +41,22 @@ async def test_create_completion_http_error(client):
 @pytest.mark.asyncio
 async def test_create_streaming_completion_success(client):
     mock_lines = ["data: line1", "data: line2"]
-    
-    with patch("httpx.AsyncClient.stream") as mock_stream:
-        mock_response = AsyncMock()
-        mock_response.__aenter__.return_value = AsyncMock(
-            status_code=200,
-            raise_for_status=lambda: None,
-            aiter_lines=AsyncMock(return_value=mock_lines)
-        )
-        mock_stream.return_value = mock_response
-        
-        result = [line async for line in client.create_streaming_completion({"prompt": "test"})]
-        assert result == ["data: line1\n\n", "data: line2\n\n"]
+    mock_aiter_lines = AsyncMock()
+    mock_aiter_lines.__aiter__.return_value = mock_lines
+
+    async with AsyncMock() as mock_response:
+        mock_response.status_code = 200
+        mock_response.raise_for_status = AsyncMock()
+        mock_response.aiter_lines = mock_aiter_lines
+
+        with patch("httpx.AsyncClient.stream") as mock_stream:
+            mock_stream.return_value.__aenter__.return_value = mock_response
+            
+            result = []
+            async for line in client.create_streaming_completion({"prompt": "test"}):
+                result.append(line)
+            
+            assert result == ["data: line1\n\n", "data: line2\n\n"]
 
 @pytest.mark.asyncio
 async def test_create_streaming_completion_http_error(client):

@@ -19,9 +19,9 @@ async def test_get_api_key_no_key():
     assert "API key required" in str(exc_info.value.detail)
 
 @pytest.mark.asyncio
-async def test_get_api_key_invalid():
+async def test_get_api_key_invalid(rate_limit_settings):  # フィクスチャを引数として受け取る
     with pytest.raises(HTTPException) as exc_info:
-        await get_api_key("invalid-key", rate_limit_settings())
+        await get_api_key("invalid-key", rate_limit_settings)
     
     assert exc_info.value.status_code == 401
     assert "Invalid API key" in str(exc_info.value.detail)
