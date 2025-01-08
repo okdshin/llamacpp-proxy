@@ -25,19 +25,19 @@ def process_logprobs(probs: List[Dict[str, Any]], top_n: int) -> LogProbs:
     text_offset = []  # 現在の実装では正確な文字オフセットは計算しない
     
     current_offset = 0
-    for prob_info in probs:
-        tokens.append(prob_info["token"])
-        token_logprobs.append(prob_info["logprob"])
+    for logprob_info in probs:
+        tokens.append(logprob_info["token"])
+        token_logprobs.append(logprob_info["logprob"])
         
         # top_logprobsの処理
         top_probs = {
             prob["text"]: prob["logprob"]
-            for prob in prob_info["top_probs"][:top_n]
+            for prob in logprob_info["top_logprobs"][:top_n]
         }
         top_logprobs.append(top_probs)
         
         text_offset.append(current_offset)
-        current_offset += len(prob_info["token"])
+        current_offset += len(logprob_info["token"])
     
     return LogProbs(
         tokens=tokens,
@@ -98,9 +98,10 @@ async def completions(
         total_tokens = prompt_tokens + completion_tokens
 
         choices = []
+        print(f"{llamacpp_response[0].keys()=}")
         for i, choice in enumerate(llamacpp_response):
             logprobs = None
-            if request.logprobs is not None and "tokens" in choice:
+            if request.logprobs is not None and "probs" in choice:
                 logprobs = process_logprobs(choice["probs"], request.logprobs)
 
             choices.append(
