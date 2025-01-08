@@ -2,7 +2,7 @@ import logging
 import time
 import uuid
 import math
-from typing import Union, List, Dict
+from typing import Any, Union, List, Dict
 from fastapi import Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -31,7 +31,7 @@ def process_logprobs(token_data: List[Dict[str, Any]], top_n: int) -> LogProbs:
         token_logprobs.append(token_logprob)
         
         # top_logprobsの処理
-        assert "top_probs" in token:
+        assert "top_probs" in token
         top_probs = {
             prob["text"]: math.log(prob["probability"]) if prob["probability"] > 0 else float("-inf")
             for prob in token["top_probs"][:top_n]

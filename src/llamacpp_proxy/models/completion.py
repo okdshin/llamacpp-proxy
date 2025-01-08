@@ -15,15 +15,16 @@ class CompletionRequest(BaseModel):
     presence_penalty: Optional[float] = 0.0
     frequency_penalty: Optional[float] = 0.0
     # これらのパラメータは現在サポートしていない
-    echo: Optional[bool] = Field(None, description="Not supported")
-    suffix: Optional[str] = Field(None, description="Not supported")
-    best_of: Optional[int] = Field(None, description="Not supported")
-    logit_bias: Optional[Dict[str, float]] = Field(None, description="Not supported")
+    echo: Optional[bool] = Field(False, info="Not supported")
+    suffix: Optional[str] = Field(None, info="Not supported")
+    best_of: Optional[int] = Field(1, info="Not supported")
+    logit_bias: Optional[Dict[str, float]] = Field(None, info="Not supported")
     user: Optional[str] = None
 
     # extra parameter for llamacpp
     llamacpp_proxy_grammar: Optional[str] = None
 
+    """
     @validator('n')
     def validate_n(cls, v):
         if v != 1:
