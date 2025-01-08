@@ -31,7 +31,8 @@ async def completions(
             "n_predict": request.max_tokens,
             "stop": request.stop if isinstance(request.stop, list) else [request.stop] if request.stop else None,
             "stream": request.stream,
-            "n_probs": request.logprobs,  # logprobsのサポート（もしllama.cppサーバーが対応している場合）
+            "presence_penalty": request.presence_penalty,
+            "frequency_penalty": request.frequency_penalty,
         }
         
         if request.llamacpp_proxy_grammar is not None:
@@ -65,7 +66,6 @@ async def completions(
                 CompletionResponseChoice(
                     text=choice["content"],
                     index=i,
-                    logprobs=None,  # TODO: implement logprobs support
                     finish_reason="stop",  # TODO: implement proper finish reason
                 )
                 for i, choice in enumerate(llamacpp_response)
@@ -79,4 +79,15 @@ async def completions(
 
     except Exception as e:
         logger.error(f"Error in text completion: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "message": str(e),
+                    "type": "server_error",
+                    "code": "internal_server_error"
+                }
+            }
+        )
