@@ -111,7 +111,9 @@ pytest --cov --cov-report=html
 
 ## ライセンス
 
-MIT
+[Apache License 2.0](LICENSE)
+
+このプロジェクトは[Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0)の下でライセンスされています。詳細については[LICENSE](LICENSE)ファイルを参照してください。
 
 ## 貢献について
 
@@ -120,3 +122,5 @@ MIT
 3. 変更をコミット
 4. テストが全て通ることを確認
 5. プルリクエストを作成
+
+貢献は[Apache License 2.0](LICENSE)の下で提供されるものとします。
