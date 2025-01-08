@@ -4,17 +4,17 @@ from llamacpp_proxy.config.settings import Settings
 
 def test_validate_empty_settings():
     settings = Settings()
-    with pytest.raises(ValueError, match="llama_server_url must be set"):
+    with pytest.raises(ValueError, match="llamacpp_server_url must be set"):
         settings.validate()
 
 def test_validate_missing_chat_template():
-    settings = Settings(llama_server_url="http://localhost:8080")
+    settings = Settings(llamacpp_server_url="http://localhost:8080")
     with pytest.raises(ValueError, match="chat_template must be set"):
         settings.validate()
 
 def test_validate_valid_settings():
     settings = Settings(
-        llama_server_url="http://localhost:8080",
+        llamacpp_server_url="http://localhost:8080",
         chat_template="test template"
     )
     settings.validate()  # should not raise
