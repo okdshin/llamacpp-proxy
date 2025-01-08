@@ -2,7 +2,7 @@
 name = "llamacpp_proxy"
 version = "0.1.0"
 description = "OpenAI API compatible reverse proxy for llama.cpp server"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.95.0",
     "uvicorn>=0.21.1",
