@@ -31,7 +31,7 @@ def process_logprobs(probs: List[Dict[str, Any]], top_n: int) -> LogProbs:
         
         # top_logprobsの処理
         top_probs = {
-            prob["text"]: prob["logprob"]
+            prob["token"]: prob["logprob"]
             for prob in logprob_info["top_logprobs"][:top_n]
         }
         top_logprobs.append(top_probs)
@@ -99,10 +99,11 @@ async def completions(
 
         choices = []
         print(f"{llamacpp_response[0].keys()=}")
+        print(f"{llamacpp_response[0]["completion_probabilities"][0].keys()=}")
         for i, choice in enumerate(llamacpp_response):
             logprobs = None
-            if request.logprobs is not None and "probs" in choice:
-                logprobs = process_logprobs(choice["probs"], request.logprobs)
+            if request.logprobs is not None and "completion_probabilities" in choice:
+                logprobs = process_logprobs(choice["completion_probabilities"], request.logprobs)
 
             choices.append(
                 CompletionResponseChoice(
