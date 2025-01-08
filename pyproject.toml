@@ -12,6 +12,9 @@ dependencies = [
     "pydantic",
 ]
 
+[project.scripts]
+llamacpp-proxy-server = "llamacpp_proxy.main:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

@@ -36,6 +36,12 @@ LIMITED_API_KEY=your-limited-api-key      # レート制限あり
 1. サーバーの起動:
 
 ```bash
+llamacpp-proxy-server --llamacpp-server http://localhost:8080 --chat-template-jinja path/to/template.jinja
+```
+
+または、モジュールとして実行:
+
+```bash
 python -m llamacpp_proxy.main --llamacpp-server http://localhost:8080 --chat-template-jinja path/to/template.jinja
 ```
 
