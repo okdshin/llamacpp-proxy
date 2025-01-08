@@ -1,5 +1,4 @@
 import argparse
-import json
 import logging
 import time
 import uuid
@@ -193,6 +192,7 @@ async def chat_completions(
         request.stop = [request.stop]
 
     # llama.cppサーバーへのリクエストを準備
+    # OpenAI API互換ではないことに注意
     llama_request = {
         "prompt": prompt,
         "temperature": request.temperature,
