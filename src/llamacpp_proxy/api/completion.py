@@ -2,7 +2,7 @@ import logging
 import time
 import uuid
 import math
-from typing import Any, Union, List, Dict
+from typing import Any, Union, List, Dict, Optional
 from fastapi import Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -45,6 +45,29 @@ def process_logprobs(probs: List[Dict[str, Any]], top_n: int) -> LogProbs:
         top_logprobs=top_logprobs,
         text_offset=text_offset
     )
+
+def get_finish_reason(choice: dict) -> Optional[str]:
+    """
+    llama.cppのstop_typeとtruncatedフラグからOpenAI APIのfinish_reasonを決定する
+    
+    finish_reason:
+    - "stop": APIリクエストで指定されたstop sequenceに到達
+    - "length": max_tokensに到達
+    - "content_filter": コンテンツフィルターによる停止（llama.cppでは未サポート）
+    - null: 生成が進行中（ストリーミング時のみ）
+    """
+    if choice.get("truncated", False):
+        return "length"
+        
+    stop_type = choice.get("stop_type")
+    if stop_type == "word":
+        return "stop"  # stop wordによる停止
+    elif stop_type == "eos":
+        return "stop"  # EOSトークンによる停止
+    elif stop_type == "limit":
+        return "length"  # n_predict（max_tokens）制限による停止
+    else:
+        return "stop"  # デフォルト値（通常は発生しない）
 
 async def completions(
     request: CompletionRequest,
@@ -98,8 +121,6 @@ async def completions(
         total_tokens = prompt_tokens + completion_tokens
 
         choices = []
-        print(f"{llamacpp_response[0].keys()=}")
-        print(f"{llamacpp_response[0]["completion_probabilities"][0].keys()=}")
         for i, choice in enumerate(llamacpp_response):
             logprobs = None
             if request.logprobs is not None and "completion_probabilities" in choice:
@@ -110,7 +131,7 @@ async def completions(
                     text=choice["content"],
                     index=i,
                     logprobs=logprobs,
-                    finish_reason="stop",  # TODO: implement proper finish reason
+                    finish_reason=get_finish_reason(choice),
                 )
             )
 
