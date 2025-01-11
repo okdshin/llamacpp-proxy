@@ -123,8 +123,20 @@ async def completions(
         choices = []
         for i, choice in enumerate(llamacpp_response):
             logprobs = None
-            if request.logprobs is not None and "completion_probabilities" in choice:
-                logprobs = process_logprobs(choice["completion_probabilities"], request.logprobs)
+            if request.logprobs is not None:
+                if "completion_probabilities" in choice:
+                    logprobs = process_logprobs(choice["completion_probabilities"], request.logprobs)
+                else:
+                    raise HTTPException(
+                        status_code=500,
+                        detail={
+                            "error": {
+                                "message": "completion_probabilities is not contained",
+                                "type": "server_error",
+                                "code": "internal_server_error"
+                            }
+                        }
+                    )
 
             choices.append(
                 CompletionResponseChoice(
